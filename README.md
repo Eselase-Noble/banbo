@@ -19,6 +19,8 @@ each issue and exactly how to fix it in plain English.
 banbo is a single self-contained binary that runs natively on **macOS, Linux, and Windows**
 (amd64 and arm64).
 
+📖 **Full documentation:** <https://eselase-noble.github.io/banbo/>
+
 > Scan. Understand. Fortify.
 
 It ships as a **single, self-contained binary** — no runtime, no dependencies to install.
