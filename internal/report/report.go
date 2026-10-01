@@ -91,7 +91,7 @@ func Text(w io.Writer, res scanner.Result, useColor bool) {
 	for _, f := range res.Findings {
 		byLayer[f.Layer] = append(byLayer[f.Layer], f)
 	}
-	layers := []findings.Layer{findings.LayerDNS, findings.LayerNetwork, findings.LayerTransport, findings.LayerApplication, findings.LayerCode}
+	layers := []findings.Layer{findings.LayerDNS, findings.LayerNetwork, findings.LayerTransport, findings.LayerApplication, findings.LayerCode, findings.LayerAdvice}
 	for _, layer := range layers {
 		fs := byLayer[layer]
 		if len(fs) == 0 {
@@ -165,6 +165,8 @@ func layerTitle(l findings.Layer) string {
 		return "Application layer (HTTP)"
 	case findings.LayerCode:
 		return "Source code review"
+	case findings.LayerAdvice:
+		return "Design & engineering advice"
 	default:
 		return string(l)
 	}

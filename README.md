@@ -1,17 +1,23 @@
 # banbo
 
-**banbo** (Twi: *to protect / defend*) is a security scanner with two modes:
+**banbo** (Twi: *to protect / defend*) is a security scanner with three modes:
 
 - **`banbo scan`** — probes a **live system** you own or are authorized to test across
   the stack (DNS/email, network, transport/TLS, application/HTTP).
 - **`banbo code`** — reviews **source code on disk** for security issues (hardcoded
   secrets, disabled TLS verification, injection-prone patterns, unsafe deserialization,
   and more), with an optional deeper AI review.
+- **`banbo advise`** — an AI **code advisor** that recommends better data structures and
+  algorithms, performance/complexity fixes, idiomatic design, maintainability, and the
+  right system-design & design patterns.
 
-Both modes report findings with severity ratings, map them to Ghana's **Bank of Ghana
-Cyber & Information Security Directive** and the **Data Protection Act, 2012 (Act 843)**,
-and can use an AI provider (**Claude**, with **OpenAI** as a fallback) to explain each
-issue and exactly how to fix it in plain English.
+The scan and code modes report findings with severity ratings, map them to Ghana's **Bank
+of Ghana Cyber & Information Security Directive** and the **Data Protection Act, 2012 (Act
+843)**, and can use an AI provider (**Claude**, with **OpenAI** as a fallback) to explain
+each issue and exactly how to fix it in plain English.
+
+banbo is a single self-contained binary that runs natively on **macOS, Linux, and Windows**
+(amd64 and arm64).
 
 > Scan. Understand. Fortify.
 
@@ -178,12 +184,31 @@ highest-risk `--ai-max-files` (15) and **tells you exactly how many files were n
 covered**; pass `--full` to audit the entire codebase. Coverage is never silently
 truncated.
 
+### AI code advice
+
+Where `banbo code` hunts for security and quality bugs, `banbo advise` is a **code
+advisor** focused on engineering craft — it recommends better data structures and
+algorithms (with Big-O reasoning), performance/complexity fixes, idiomatic design,
+maintainability and test gaps, and the right system-design & design patterns.
+
+```bash
+# Advise on the current project (needs an AI key — Claude or OpenAI)
+banbo advise .
+
+# Advise on the entire codebase, as JSON
+banbo advise ./src --full -o json > advice.json
+```
+
+`banbo advise` requires an AI provider key (run `banbo config` for setup); it is
+read-only and always exits `0` (it is guidance, not a pass/fail gate).
+
 ### Commands
 
 | Command          | Description                                              |
 |------------------|----------------------------------------------------------|
 | `banbo scan <target>` | Scan a live host, IP or URL across all layers       |
 | `banbo code [path]`   | Review source code for security issues (default `.`) |
+| `banbo advise [path]` | AI code advisor: data structures, algorithms, design (default `.`) |
 | `banbo config`   | Show configuration and how to enable AI enrichment       |
 | `banbo version`  | Print the version                                        |
 

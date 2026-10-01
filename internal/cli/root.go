@@ -24,6 +24,7 @@ Only scan systems you own or are explicitly authorized to test.`,
 	}
 	root.AddCommand(newScanCommand())
 	root.AddCommand(newCodeCommand())
+	root.AddCommand(newAdviseCommand())
 	root.AddCommand(newConfigCommand())
 	root.AddCommand(newVersionCommand())
 	return root

@@ -54,6 +54,9 @@ const (
 	// LayerCode is used by the source-code review engine rather than the live
 	// network scanner.
 	LayerCode Layer = "code"
+	// LayerAdvice is used by the `advise` command for design/algorithm and
+	// best-practice recommendations (not security findings).
+	LayerAdvice Layer = "advice"
 )
 
 // Order returns a stable sort rank so reports read bottom-up through the stack.
@@ -69,8 +72,10 @@ func (l Layer) Order() int {
 		return 3
 	case LayerCode:
 		return 4
-	default:
+	case LayerAdvice:
 		return 5
+	default:
+		return 6
 	}
 }
 
