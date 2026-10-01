@@ -35,7 +35,7 @@ func Reviewable(path string) bool {
 	return reviewExts[strings.ToLower(filepath.Ext(path))]
 }
 
-// ReviewCode asks Claude to audit source files for security and quality issues,
+// ReviewCode asks the configured AI provider to audit source files for security and quality issues,
 // returning normalized findings. Pass files in priority order; maxFiles caps how
 // many are sent (maxFiles <= 0 means audit every eligible file). projectContext
 // is a short tech-stack summary included in each prompt for context-aware
@@ -112,7 +112,7 @@ File: %s
 Content:
 %s`, ctxLine, f.Path, content)
 
-	text, err := callClaude(ctx, cfg, prompt)
+	text, err := complete(ctx, cfg, prompt)
 	if err != nil {
 		return nil
 	}

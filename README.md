@@ -10,7 +10,8 @@
 
 Both modes report findings with severity ratings, map them to Ghana's **Bank of Ghana
 Cyber & Information Security Directive** and the **Data Protection Act, 2012 (Act 843)**,
-and can use **Claude** to explain each issue and exactly how to fix it in plain English.
+and can use an AI provider (**Claude**, with **OpenAI** as a fallback) to explain each
+issue and exactly how to fix it in plain English.
 
 > Scan. Understand. Fortify.
 
@@ -34,6 +35,22 @@ You are responsible for how you use this tool.
 
 ## Installation
 
+### Download a prebuilt binary (no Go required)
+
+Grab the archive for your OS/arch from the
+[Releases](https://github.com/Eselase-Noble/banbo/releases/latest) page, extract it, and
+run it:
+
+```bash
+# macOS / Linux example (adjust the file name for your platform)
+tar -xzf banbo_darwin_arm64.tar.gz
+./banbo version
+# optional: move it onto your PATH
+sudo mv banbo /usr/local/bin/
+```
+
+On Windows, download the `.zip`, extract `banbo.exe`, and run it from a terminal.
+
 ### From source (Go 1.22+)
 
 ```bash
@@ -48,9 +65,6 @@ cd banbo
 go build -o banbo ./cmd/banbo
 ./banbo version
 ```
-
-Prebuilt binaries for macOS, Linux and Windows will be published on the
-[Releases](https://github.com/Eselase-Noble/banbo/releases) page.
 
 ---
 
@@ -87,7 +101,7 @@ banbo code . --no-ai
 ```
 
 `banbo code` walks the directory (skipping `node_modules`, `.git`, `vendor`, `dist`,
-etc.), runs built-in pattern rules offline on **every** file, and — when a Claude API key
+etc.), runs built-in pattern rules offline on **every** file, and — when an API key
 is configured — adds a deeper AI security/quality audit. It is read-only; it never
 modifies your code.
 
@@ -117,7 +131,7 @@ truncated.
 | `--timeout`            | Per-connection timeout (default `5s`)                  |
 | `-y, --i-am-authorized`| Confirm you are authorized to scan the target          |
 | `--active`             | Enable deeper (still non-destructive) checks           |
-| `--no-ai`              | Skip Claude enrichment even if a key is configured     |
+| `--no-ai`              | Skip AI enrichment even if a key is configured         |
 | `--no-color`           | Disable colored output                                 |
 
 **Exit codes** (CI/CD friendly): `0` clean/info only · `1` low/medium findings ·
@@ -128,20 +142,28 @@ truncated.
 ## AI-powered explanations (optional)
 
 Without any setup, `banbo` reports findings using built-in remediation guidance.
-Add a Claude API key to also get plain-English explanations, business-impact summaries
-and step-by-step fixes:
+Add an API key to also get plain-English explanations, business-impact summaries
+and step-by-step fixes. **Claude is preferred; OpenAI is used as a fallback** — set
+either one (or both):
 
 ```bash
-export BANBO_API_KEY=sk-ant-...      # or ANTHROPIC_API_KEY
+export BANBO_API_KEY=sk-ant-...      # Claude  (or ANTHROPIC_API_KEY)
+export OPENAI_API_KEY=sk-...         # OpenAI  (or BANBO_OPENAI_API_KEY)
 ```
 
 or create `~/.banbo/config.json`:
 
 ```json
-{ "api_key": "sk-ant-...", "model": "claude-opus-4-8" }
+{
+  "api_key": "sk-ant-...",
+  "model": "claude-opus-4-8",
+  "openai_api_key": "sk-...",
+  "openai_model": "gpt-4o-mini"
+}
 ```
 
-Run `banbo config` to check your setup.
+Keys are read from the environment or `~/.banbo/config.json` only — **never commit them
+to the repo**. Run `banbo config` to check which provider is active.
 
 ---
 
@@ -158,7 +180,7 @@ finding, then enriches and reports:
 4. **Application (HTTP)** — missing security headers, version disclosure, permissive
    CORS, insecure cookies.
 5. **Normalize → enrich → report** — de-duplicate, score, map to compliance, optionally
-   explain with Claude, and print to the terminal or as JSON.
+   explain with AI (Claude or OpenAI), and print to the terminal or as JSON.
 
 ### Architecture
 
@@ -170,7 +192,7 @@ internal/
   modules/           pluggable live checks: network, tls, http, dns
   codescan/          source-code review engine + built-in pattern rules
   findings/          normalized Finding model, severity, de-dup & summary
-  ai/                Claude API enrichment + AI code review (optional)
+  ai/                AI enrichment (Claude + OpenAI) + AI code review (optional)
   compliance/        BoG Directive & Data Protection Act mapping
   report/            terminal + JSON renderers
   config/            config file + environment loading

@@ -22,6 +22,7 @@ import (
 
 const (
 	endpoint       = "https://api.anthropic.com/v1/messages"
+	openAIEndpoint = "https://api.openai.com/v1/chat/completions"
 	apiVersion     = "2023-06-01"
 	maxEnrich      = 25 // cap findings sent to the model to control cost/latency
 	requestTimeout = 60 * time.Second
@@ -74,7 +75,7 @@ Return ONLY a JSON array, no prose, no markdown fences. Each element:
 Findings:
 %s`, string(payload))
 
-	text, err := callClaude(ctx, cfg, prompt)
+	text, err := complete(ctx, cfg, prompt)
 	if err != nil {
 		return 0, err
 	}
@@ -155,6 +156,75 @@ func callClaude(ctx context.Context, cfg config.Config, prompt string) (string, 
 		}
 	}
 	return sb.String(), nil
+}
+
+// complete runs a single text completion against the configured provider,
+// preferring Claude and falling back to OpenAI. If Claude is configured but the
+// request fails and OpenAI is also configured, it retries on OpenAI so a
+// transient Claude outage still yields enrichment.
+func complete(ctx context.Context, cfg config.Config, prompt string) (string, error) {
+	if cfg.HasClaude() {
+		text, err := callClaude(ctx, cfg, prompt)
+		if err == nil {
+			return text, nil
+		}
+		if !cfg.HasOpenAI() {
+			return "", err
+		}
+		// fall through to OpenAI
+	}
+	if cfg.HasOpenAI() {
+		return callOpenAI(ctx, cfg, prompt)
+	}
+	return "", fmt.Errorf("no AI provider configured")
+}
+
+// callOpenAI issues a single Chat Completions request and returns the text
+// content. It speaks the raw HTTP API to keep banbo dependency-light.
+func callOpenAI(ctx context.Context, cfg config.Config, prompt string) (string, error) {
+	reqBody := map[string]any{
+		"model":      cfg.OpenAIModel,
+		"max_tokens": 4000,
+		"messages": []map[string]any{
+			{"role": "user", "content": prompt},
+		},
+	}
+	buf, _ := json.Marshal(reqBody)
+
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, openAIEndpoint, bytes.NewReader(buf))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("authorization", "Bearer "+cfg.OpenAIKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("openai API returned %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var parsed struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return "", err
+	}
+	if len(parsed.Choices) == 0 {
+		return "", fmt.Errorf("openai API returned no choices")
+	}
+	return parsed.Choices[0].Message.Content, nil
 }
 
 // extractJSON pulls the JSON array out of a model response, tolerating stray
