@@ -1,0 +1,60 @@
+site_name: banbo
+site_description: >-
+  Layered security scanner for Ghana — probe live systems and audit source code,
+  mapped to the Bank of Ghana Cyber Directive & Data Protection Act, with optional
+  AI explanations and an AI code advisor.
+site_url: https://eselase-noble.github.io/banbo/
+repo_url: https://github.com/Eselase-Noble/banbo
+repo_name: Eselase-Noble/banbo
+copyright: "banbo — Scan. Understand. Fortify."
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Install: installation.md
+  - Commands: usage.md
+  - AI setup: ai-setup.md
+  - Docker: docker.md
+  - GitHub Action: github-action.md
+  - Language SDKs: languages.md
+  - Compliance: compliance.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
