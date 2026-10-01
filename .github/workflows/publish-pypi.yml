@@ -1,0 +1,103 @@
+name: publish-pypi
+
+# Build and publish the Python client (clients/python) to PyPI when a version
+# tag like `v0.1.1` is pushed.
+#
+# DORMANT BY DEFAULT: the `publish` job only runs when the repository variable
+# `PYPI_PUBLISH_ENABLED` is set to "true" AND one of the two auth methods below
+# is configured. Until then, tagging still builds + validates the artifacts
+# (the `build` job) but nothing is uploaded.
+#
+# Auth, pick one:
+#   A) Trusted Publishing (recommended): configure a PyPI trusted publisher for
+#      this repo + workflow + the `pypi` environment. No secrets needed. This is
+#      the active path below (`permissions: id-token: write`).
+#   B) API token fallback: add a `PYPI_API_TOKEN` repo secret, then swap the
+#      commented-out token step in for the trusted-publishing step.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: clients/python
+
+jobs:
+  build:
+    name: Build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade build
+
+      - name: Verify tag matches package version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(python -c 'import tomllib,sys; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          echo "tag=$tag package=$pkg"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::Git tag v$tag does not match pyproject.toml version $pkg. Bump the version and re-tag."
+            exit 1
+          fi
+
+      - name: Build distributions
+        run: python -m build --sdist --wheel --outdir dist/
+
+      - name: Check distributions
+        run: |
+          python -m pip install --upgrade twine
+          python -m twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: clients/python/dist/*
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Dormant guard: flip repo variable PYPI_PUBLISH_ENABLED to "true" to enable.
+    if: vars.PYPI_PUBLISH_ENABLED == 'true'
+    environment:
+      name: pypi
+      url: https://pypi.org/project/banbo/
+    permissions:
+      # Required for PyPI Trusted Publishing (OIDC). Harmless for the token path.
+      id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+
+      # --- Option A: Trusted Publishing (OIDC) — no secrets required. ---------
+      - name: Publish to PyPI (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+      # --- Option B: API token fallback. --------------------------------------
+      # Comment out the step above and uncomment this one after adding a
+      # `PYPI_API_TOKEN` repository secret.
+      #
+      # - name: Publish to PyPI (API token)
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     packages-dir: dist/
+      #     password: ${{ secrets.PYPI_API_TOKEN }}

@@ -1,0 +1,48 @@
+{
+  "name": "banbo",
+  "version": "0.1.1",
+  "description": "npm wrapper for banbo — a layered security scanner. Downloads the prebuilt Go binary and runs it as a CLI or programmatic library.",
+  "license": "MIT",
+  "author": "Eselase-Noble",
+  "homepage": "https://github.com/Eselase-Noble/banbo#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eselase-Noble/banbo.git",
+    "directory": "clients/npm"
+  },
+  "bugs": {
+    "url": "https://github.com/Eselase-Noble/banbo/issues"
+  },
+  "keywords": [
+    "banbo",
+    "security",
+    "scanner",
+    "vulnerability",
+    "pentest",
+    "sast",
+    "dns",
+    "network",
+    "tls",
+    "cli",
+    "security-scanner"
+  ],
+  "bin": {
+    "banbo": "bin/banbo.js"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "postinstall": "node scripts/download.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ]
+}

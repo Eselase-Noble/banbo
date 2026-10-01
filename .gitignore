@@ -13,3 +13,14 @@ config.json
 *.swp
 .idea/
 .vscode/
+
+# Language-wrapper build artifacts (clients/)
+clients/java/target/
+clients/npm/node_modules/
+clients/npm/vendor/
+clients/python/**/__pycache__/
+clients/python/**/*.egg-info/
+clients/python/dist/
+clients/python/build/
+clients/dotnet/**/bin/
+clients/dotnet/**/obj/

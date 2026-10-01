@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "banbo"
+version = "0.1.1"
+description = "Python client wrapper for the banbo layered security scanner CLI. Downloads the prebuilt banbo binary and runs it as a CLI or programmatic library, parsing its JSON output into typed dataclasses."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Eselase Noble", email = "noble@eselase.dev" }]
+keywords = [
+    "banbo",
+    "security",
+    "scanner",
+    "vulnerability",
+    "pentest",
+    "sast",
+    "dns",
+    "network",
+    "tls",
+    "cli",
+    "security-scanner",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: System :: Networking :: Monitoring",
+]
+# Pure-Python wrapper: no runtime dependencies, stdlib only.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Eselase-Noble/banbo"
+Repository = "https://github.com/Eselase-Noble/banbo"
+Issues = "https://github.com/Eselase-Noble/banbo/issues"
+Changelog = "https://github.com/Eselase-Noble/banbo/releases"
+
+[project.scripts]
+banbo = "banbo.__main__:main"
+
+# The repository root (several levels up) contains a `.git` directory and an
+# unrelated Go `banbo` binary. Pin the build to this directory so hatchling's
+# file discovery is rooted at clients/python and never walks up into the repo.
+[tool.hatch.build]
+ignore-vcs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["banbo"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/banbo", "/README.md", "/pyproject.toml"]
+exclude = ["*.pyc", "__pycache__", ".gitignore"]

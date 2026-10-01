@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.0 for the broadest reach (classic .NET Framework, Mono, Unity),
+         plus net8.0 so modern consumers get first-class APIs such as System.Formats.Tar. -->
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- NuGet package metadata -->
+    <PackageId>Banbo</PackageId>
+    <Version>0.1.1</Version>
+    <Authors>Eselase-Noble</Authors>
+    <Company>Eselase-Noble</Company>
+    <Product>Banbo</Product>
+    <Description>Idiomatic .NET client for the banbo layered security scanner. Downloads the prebuilt banbo CLI binary on demand and runs it, exposing a fluent API that returns strongly typed scan results.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Eselase-Noble/banbo</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Eselase-Noble/banbo</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>banbo;security;scanner;vulnerability;sast;dns;network;cli</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Suppress "missing XML comment" noise; public surface is documented where it matters. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- System.Text.Json is in-box on net8.0 but must be referenced on netstandard2.0.
+       System.IO.Compression.ZipFile provides ZipArchive's ExtractToFile extension there. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>

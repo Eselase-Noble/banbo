@@ -79,6 +79,60 @@ go build -o banbo ./cmd/banbo
 
 ---
 
+## Use it from any language, container, or CI
+
+banbo is a single binary, and every integration below is a thin wrapper that
+downloads that binary and runs it — one engine, many front doors. Each wrapper
+exposes both the CLI and a small programmatic API that returns banbo's JSON
+findings as native objects. See the per-ecosystem guides under
+[`clients/`](./clients).
+
+| Ecosystem | Install | Guide |
+|-----------|---------|-------|
+| **Go** (import) | `go get github.com/Eselase-Noble/banbo/pkg/banbo` | [`pkg/banbo`](./pkg/banbo) |
+| **Java / Maven** | `io.github.eselase-noble:banbo:0.1.1` in `pom.xml` | [`clients/java`](./clients/java) |
+| **JavaScript / npm** | `npm install banbo` | [`clients/npm`](./clients/npm) |
+| **Python / PyPI** | `pip install banbo` | [`clients/python`](./clients/python) |
+| **PHP / Composer** | `composer require eselase-noble/banbo` | [`clients/php`](./clients/php) |
+| **C# / NuGet** | `dotnet add package Banbo` | [`clients/dotnet`](./clients/dotnet) |
+
+```go
+// Go
+import "github.com/Eselase-Noble/banbo/pkg/banbo"
+
+res, _ := banbo.ReviewCode(ctx, ".", nil)
+for _, f := range res.Findings {
+    fmt.Printf("[%s] %s — %s\n", f.Severity, f.Title, f.Asset)
+}
+```
+
+### Run with Docker
+
+The image is published to the GitHub Container Registry for `linux/amd64` and
+`linux/arm64`:
+
+```bash
+# Audit the current directory
+docker run --rm -v "$PWD:/src" -w /src ghcr.io/eselase-noble/banbo:latest code .
+
+# Scan a target you're authorized to test (pass an AI key to enrich findings)
+docker run --rm -e ANTHROPIC_API_KEY ghcr.io/eselase-noble/banbo:latest scan example.com.gh -y
+```
+
+### Use as a GitHub Action
+
+Run banbo in any repository's CI; its exit code (`0`/`1`/`2`) gates the job:
+
+```yaml
+- uses: Eselase-Noble/banbo@v1
+  with:
+    args: "code ."
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional, enables AI review
+```
+
+---
+
 ## Usage
 
 ```bash

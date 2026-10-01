@@ -1,0 +1,68 @@
+name: publish-npm
+
+# Publish the banbo npm wrapper when a version tag is pushed.
+# The job is dormant/harmless until the NPM_TOKEN secret is configured.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: clients/npm
+    steps:
+      - name: Check NPM_TOKEN is configured
+        id: guard
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN secret is not set; skipping publish (dormant)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Derive version from tag
+        if: steps.guard.outputs.enabled == 'true'
+        id: version
+        run: |
+          # refs/tags/v1.2.3 -> 1.2.3
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing banbo@$VERSION"
+
+      - name: Set package version to match tag
+        if: steps.guard.outputs.enabled == 'true'
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        if: steps.guard.outputs.enabled == 'true'
+        # The package has no runtime deps; skip postinstall so CI does not attempt
+        # to download a platform binary for a release asset that may not exist yet.
+        run: npm ci --ignore-scripts || npm install --ignore-scripts --no-package-lock
+
+      - name: Publish
+        if: steps.guard.outputs.enabled == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

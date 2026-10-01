@@ -1,0 +1,20 @@
+# Keep the Docker build context small and reproducible.
+.git/
+.github/
+dist/
+clients/
+banbo
+banbo.exe
+*.tar.gz
+*.zip
+*.out
+*.exe
+.DS_Store
+.idea/
+.vscode/
+*.md
+LICENSE
+.goreleaser.yaml
+Dockerfile
+.dockerignore
+action.yml

@@ -1,0 +1,74 @@
+name: publish-nuget
+
+# Publish the Banbo .NET client to nuget.org when a version tag (e.g. v0.1.1) is pushed.
+# Dormant until the NUGET_API_KEY repository secret is configured.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: clients/dotnet
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard — require NUGET_API_KEY
+        id: guard
+        working-directory: .
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "NUGET_API_KEY is not set; skipping publish (workflow is dormant until the secret is added)."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up .NET
+        if: steps.guard.outputs.publish == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Derive version from tag
+        if: steps.guard.outputs.publish == 'true'
+        id: version
+        working-directory: .
+        run: |
+          # Strip the leading "v" from the tag, e.g. v0.1.1 -> 0.1.1
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version $VERSION"
+
+      - name: Restore
+        if: steps.guard.outputs.publish == 'true'
+        run: dotnet restore Banbo.csproj
+
+      - name: Pack
+        if: steps.guard.outputs.publish == 'true'
+        run: >
+          dotnet pack Banbo.csproj
+          --configuration Release
+          --no-restore
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:PackageVersion=${{ steps.version.outputs.version }}
+          --output ./artifacts
+
+      - name: Push to nuget.org
+        if: steps.guard.outputs.publish == 'true'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: >
+          dotnet nuget push "./artifacts/*.nupkg"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

@@ -1,0 +1,50 @@
+{
+    "name": "eselase-noble/banbo",
+    "description": "PHP client wrapper for the banbo layered security scanner CLI. Downloads the prebuilt banbo binary and runs it, parsing its JSON output into typed value objects.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "banbo",
+        "security",
+        "scanner",
+        "vulnerability",
+        "pentest",
+        "sast",
+        "dns",
+        "network",
+        "tls",
+        "cli",
+        "security-scanner"
+    ],
+    "homepage": "https://github.com/Eselase-Noble/banbo",
+    "authors": [
+        {
+            "name": "Eselase Noble",
+            "email": "noble@eselase.dev",
+            "homepage": "https://github.com/Eselase-Noble",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/Eselase-Noble/banbo/issues",
+        "source": "https://github.com/Eselase-Noble/banbo",
+        "docs": "https://github.com/Eselase-Noble/banbo#readme"
+    },
+    "require": {
+        "php": ">=8.0",
+        "ext-json": "*"
+    },
+    "suggest": {
+        "ext-zip": "Required to extract the Windows (.zip) release archive",
+        "ext-phar": "Required to extract the Linux/macOS (.tar.gz) release archive"
+    },
+    "autoload": {
+        "psr-4": {
+            "EselaseNoble\\Banbo\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
+}

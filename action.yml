@@ -1,0 +1,41 @@
+name: "banbo security scanner"
+description: "Scan live systems or audit source code for security issues with banbo, in any CI."
+author: "Eselase-Noble"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  args:
+    description: >
+      Arguments passed to banbo, e.g. "code ." to audit the checked-out repo,
+      or "scan example.com.gh -y -o json" to scan a target you are authorized to test.
+    required: false
+    default: "code ."
+  version:
+    description: "banbo image tag to run (e.g. v0.1.1 or latest)."
+    required: false
+    default: "latest"
+
+runs:
+  using: composite
+  steps:
+    - name: Run banbo
+      shell: bash
+      env:
+        BANBO_IMAGE: "ghcr.io/eselase-noble/banbo:${{ inputs.version }}"
+        BANBO_ARGS: ${{ inputs.args }}
+      run: |
+        set -euo pipefail
+        docker pull "$BANBO_IMAGE"
+        # Mount the checked-out repo and forward any AI keys the caller set on
+        # this step's env (ANTHROPIC_API_KEY / OPENAI_API_KEY). The -e NAME form
+        # forwards the value only if it is present in the environment.
+        docker run --rm \
+          -e ANTHROPIC_API_KEY \
+          -e OPENAI_API_KEY \
+          -e BANBO_API_KEY \
+          -e BANBO_OPENAI_API_KEY \
+          -v "${GITHUB_WORKSPACE}:/src" \
+          -w /src \
+          "$BANBO_IMAGE" $BANBO_ARGS
