@@ -169,8 +169,8 @@ monorepo and push the subtree to the dedicated repo on each release.
    `BinaryResolver::VERSION` constant / the banbo binary release:
 
    ```bash
-   git -C /path/to/banbo-php tag v0.1.1
-   git -C /path/to/banbo-php push banbo-php v0.1.1
+   git -C /path/to/banbo-php tag v0.1.2
+   git -C /path/to/banbo-php push banbo-php v0.1.2
    ```
 
 4. **Submit the package** at <https://packagist.org/packages/submit>: sign in

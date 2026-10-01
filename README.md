@@ -90,7 +90,7 @@ findings as native objects. See the per-ecosystem guides under
 | Ecosystem | Install | Guide |
 |-----------|---------|-------|
 | **Go** (import) | `go get github.com/Eselase-Noble/banbo/pkg/banbo` | [`pkg/banbo`](./pkg/banbo) |
-| **Java / Maven** | `io.github.eselase-noble:banbo:0.1.1` in `pom.xml` | [`clients/java`](./clients/java) |
+| **Java / Maven** | `io.github.eselase-noble:banbo:0.1.2` in `pom.xml` | [`clients/java`](./clients/java) |
 | **JavaScript / npm** | `npm install banbo` | [`clients/npm`](./clients/npm) |
 | **Python / PyPI** | `pip install banbo` | [`clients/python`](./clients/python) |
 | **PHP / Composer** | `composer require eselase-noble/banbo` | [`clients/php`](./clients/php) |

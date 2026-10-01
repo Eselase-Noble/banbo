@@ -32,7 +32,7 @@ from typing import Dict, Optional
 
 # Version of the banbo CLI this wrapper targets. Kept in sync with the package
 # version declared in pyproject.toml and the upstream git tag ``v<VERSION>``.
-BANBO_VERSION = "0.1.1"
+BANBO_VERSION = "0.1.2"
 
 # GitHub coordinates for the release assets.
 _GITHUB_OWNER = "Eselase-Noble"

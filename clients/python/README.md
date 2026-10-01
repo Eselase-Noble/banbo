@@ -171,12 +171,12 @@ Uses OpenID Connect; no long-lived API token is stored in GitHub.
 
 ### Cutting a release
 
-The distribution version comes from `pyproject.toml` (currently `0.1.1`). Bump it
+The distribution version comes from `pyproject.toml` (currently `0.1.2`). Bump it
 to match the tag, then:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 > Tip: test against TestPyPI first by temporarily setting the publish action's

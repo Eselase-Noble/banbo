@@ -25,7 +25,7 @@ final class BinaryResolver
     public const REPO = 'banbo';
 
     /** Release version this wrapper pins to (git tag v{VERSION}). */
-    public const VERSION = '0.1.1';
+    public const VERSION = '0.1.2';
 
     /** @var array<string, string> Memoized resolved paths keyed by version. */
     private static array $resolved = [];

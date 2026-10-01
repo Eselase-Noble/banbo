@@ -11,7 +11,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>Banbo</PackageId>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>Eselase-Noble</Authors>
     <Company>Eselase-Noble</Company>
     <Product>Banbo</Product>
