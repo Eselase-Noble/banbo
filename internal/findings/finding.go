@@ -51,6 +51,9 @@ const (
 	LayerNetwork     Layer = "network"
 	LayerTransport   Layer = "transport"
 	LayerApplication Layer = "application"
+	// LayerCode is used by the source-code review engine rather than the live
+	// network scanner.
+	LayerCode Layer = "code"
 )
 
 // Order returns a stable sort rank so reports read bottom-up through the stack.
@@ -64,8 +67,10 @@ func (l Layer) Order() int {
 		return 2
 	case LayerApplication:
 		return 3
-	default:
+	case LayerCode:
 		return 4
+	default:
+		return 5
 	}
 }
 

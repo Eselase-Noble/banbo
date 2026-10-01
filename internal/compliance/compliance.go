@@ -33,15 +33,34 @@ var rules = []rule{
 	{"net-open-port-", []string{
 		"BoG CISD: Network segmentation & attack-surface management",
 	}},
+	{"code-secret-", []string{
+		"BoG CISD: Cryptographic key & secret management",
+		"Data Protection Act 2012 (Act 843) s.28: Security safeguards",
+	}},
+	{"code-", []string{
+		"BoG CISD: Secure software development",
+		"Data Protection Act 2012 (Act 843) s.28: Security safeguards",
+	}},
+	{"ai-code-review", []string{
+		"BoG CISD: Secure software development",
+	}},
 }
 
 // Apply annotates each finding in place with any compliance tags it maps to.
+// Multiple prefix rules may match one finding (e.g. "code-secret-" and "code-");
+// tags are de-duplicated so each control appears once.
 func Apply(fs []findings.Finding) {
 	for i := range fs {
 		var tags []string
+		seen := map[string]bool{}
 		for _, r := range rules {
 			if strings.HasPrefix(fs[i].ID, r.prefix) {
-				tags = append(tags, r.tags...)
+				for _, tag := range r.tags {
+					if !seen[tag] {
+						seen[tag] = true
+						tags = append(tags, tag)
+					}
+				}
 			}
 		}
 		if len(tags) > 0 {

@@ -23,6 +23,7 @@ Only scan systems you own or are explicitly authorized to test.`,
 		SilenceErrors: true,
 	}
 	root.AddCommand(newScanCommand())
+	root.AddCommand(newCodeCommand())
 	root.AddCommand(newConfigCommand())
 	root.AddCommand(newVersionCommand())
 	return root

@@ -1,11 +1,16 @@
 # banbo
 
-**banbo** (Twi: *to protect / defend*) is a layered security scanner. Point it at a
-system you own or are authorized to test, and it probes across the stack — DNS/email,
-network, transport (TLS) and application (HTTP) — then reports the vulnerabilities it
-finds with severity ratings, maps them to Ghana's **Bank of Ghana Cyber & Information
-Security Directive** and the **Data Protection Act, 2012 (Act 843)**, and can use
-**Claude** to explain each issue and exactly how to fix it in plain English.
+**banbo** (Twi: *to protect / defend*) is a security scanner with two modes:
+
+- **`banbo scan`** — probes a **live system** you own or are authorized to test across
+  the stack (DNS/email, network, transport/TLS, application/HTTP).
+- **`banbo code`** — reviews **source code on disk** for security issues (hardcoded
+  secrets, disabled TLS verification, injection-prone patterns, unsafe deserialization,
+  and more), with an optional deeper AI review.
+
+Both modes report findings with severity ratings, map them to Ghana's **Bank of Ghana
+Cyber & Information Security Directive** and the **Data Protection Act, 2012 (Act 843)**,
+and can use **Claude** to explain each issue and exactly how to fix it in plain English.
 
 > Scan. Understand. Fortify.
 
@@ -65,11 +70,29 @@ banbo scan https://app.example.com -o json > report.json
 banbo scan 192.0.2.10 --ports 22,80,443 --timeout 5s -y
 ```
 
+### Reviewing source code
+
+```bash
+# Review the current project for security issues
+banbo code .
+
+# Review a specific directory, save JSON
+banbo code ./src -o json > code-report.json
+
+# Pattern rules only (skip AI even if a key is set)
+banbo code . --no-ai
+```
+
+`banbo code` walks the directory (skipping `node_modules`, `.git`, `vendor`, `dist`,
+etc.), runs built-in pattern rules offline, and — when a Claude API key is configured —
+adds a deeper AI security/quality review. It is read-only; it never modifies your code.
+
 ### Commands
 
 | Command          | Description                                              |
 |------------------|----------------------------------------------------------|
-| `banbo scan <target>` | Scan a host, IP or URL across all layers            |
+| `banbo scan <target>` | Scan a live host, IP or URL across all layers       |
+| `banbo code [path]`   | Review source code for security issues (default `.`) |
 | `banbo config`   | Show configuration and how to enable AI enrichment       |
 | `banbo version`  | Print the version                                        |
 
@@ -130,11 +153,12 @@ finding, then enriches and reports:
 ```
 cmd/banbo            CLI entry point
 internal/
-  cli/               command wiring (scan, config, version)
+  cli/               command wiring (scan, code, config, version)
   scanner/           target parsing + concurrent orchestrator + Module interface
-  modules/           pluggable checks: network, tls, http, dns
+  modules/           pluggable live checks: network, tls, http, dns
+  codescan/          source-code review engine + built-in pattern rules
   findings/          normalized Finding model, severity, de-dup & summary
-  ai/                Claude API enrichment (optional; static fallback)
+  ai/                Claude API enrichment + AI code review (optional)
   compliance/        BoG Directive & Data Protection Act mapping
   report/            terminal + JSON renderers
   config/            config file + environment loading
