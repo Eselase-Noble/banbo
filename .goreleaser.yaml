@@ -1,5 +1,11 @@
-# GoReleaser configuration for building cross-platform banbo binaries.
-# Usage (once a GitHub token is configured): goreleaser release --clean
+# GoReleaser configuration for building and publishing cross-platform banbo binaries.
+#
+# Releases are automated via GitHub Actions (.github/workflows/release.yml):
+# push a tag like `v0.2.0` and the workflow runs `goreleaser release --clean`.
+#
+# To cut a release locally instead:
+#   export GITHUB_TOKEN=...            # a token with repo scope
+#   goreleaser release --clean         # or: goreleaser build --snapshot --clean
 version: 2
 
 project_name: banbo
@@ -24,6 +30,10 @@ builds:
     ldflags:
       - -s -w -X github.com/Eselase-Noble/banbo/internal/cli.Version={{.Version}}
 
+# Ship a single universal binary for macOS alongside the per-arch ones.
+universal_binaries:
+  - replace: false
+
 archives:
   - formats: [tar.gz]
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
@@ -34,5 +44,32 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^.*?(feat|add)(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?(fix|bug)(\(.+\))??!?:.+$'
+      order: 1
+    - title: Other changes
+      order: 999
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - 'merge conflict'
+      - Merge pull request
+      - Merge branch
+
 release:
-  draft: true
+  draft: false
+  prerelease: auto
+  name_template: "banbo {{ .Tag }}"
+  footer: |
+    ---
+    **Install:** download the archive for your platform above, extract, and run `./banbo version`.
+    Verify integrity against `checksums.txt`. Go users: `go install github.com/Eselase-Noble/banbo/cmd/banbo@latest`.
