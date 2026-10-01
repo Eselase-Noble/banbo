@@ -33,7 +33,7 @@ import java.util.zip.ZipInputStream;
 public final class BinaryResolver {
 
     /** The banbo version this client targets; also the release tag suffix. */
-    public static final String VERSION = "0.1.2";
+    public static final String VERSION = "0.1.3";
 
     private static final String ENV_OVERRIDE = "BANBO_BINARY";
     private static final String RELEASE_URL_TEMPLATE =

@@ -16,14 +16,14 @@ JSON output into typed Java objects.
 <dependency>
     <groupId>io.github.eselase-noble</groupId>
     <artifactId>banbo</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.eselase-noble:banbo:0.1.2'
+implementation 'io.github.eselase-noble:banbo:0.1.3'
 ```
 
 ## Usage
@@ -107,7 +107,7 @@ GitHub release asset (`tar.gz` for linux/darwin, `zip` for windows).
 
 Releases publish to Maven Central automatically via
 [`.github/workflows/publish-maven.yml`](../../.github/workflows/publish-maven.yml), triggered
-by pushing a `v*` tag (e.g. `git tag v0.1.2 && git push origin v0.1.2`). The workflow derives
+by pushing a `v*` tag (e.g. `git tag v0.1.3 && git push origin v0.1.3`). The workflow derives
 the artifact version from the tag.
 
 ### Required repository secrets

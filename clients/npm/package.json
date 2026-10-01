@@ -1,6 +1,6 @@
 {
   "name": "banbo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "npm wrapper for banbo — a layered security scanner. Downloads the prebuilt Go binary and runs it as a CLI or programmatic library.",
   "license": "MIT",
   "author": "Eselase-Noble",

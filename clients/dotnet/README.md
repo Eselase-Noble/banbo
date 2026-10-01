@@ -11,14 +11,14 @@ returning strongly typed results.
 ## Install
 
 ```bash
-dotnet add package Banbo --version 0.1.2
+dotnet add package Banbo --version 0.1.3
 ```
 
 Or add a `<PackageReference>` to your `.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="Banbo" Version="0.1.2" />
+  <PackageReference Include="Banbo" Version="0.1.3" />
 </ItemGroup>
 ```
 

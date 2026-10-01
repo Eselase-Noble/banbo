@@ -32,7 +32,7 @@ namespace Banbo
         public const string Repo = "banbo";
 
         /// <summary>The banbo release version this client pins to.</summary>
-        public const string Version = "0.1.2";
+        public const string Version = "0.1.3";
 
         private static readonly object CacheLock = new object();
 
