@@ -19,6 +19,17 @@ It ships as a **single, self-contained binary** — no runtime, no dependencies 
 
 ---
 
+## Research context
+
+banbo is part of a research portfolio spanning **health care**, **system improvement**,
+and **fraud detection**. It targets the latter two: it **improves existing systems** by
+finding and explaining their weaknesses layer by layer, and it supports **fraud/abuse
+prevention** by hardening the infrastructure attackers rely on. In a health-care setting
+it can audit clinic and hospital systems and map patient-data exposure to the Data
+Protection Act, 2012 (Act 843).
+
+---
+
 ## ⚠️ Legal & responsible use
 
 Scanning systems you do not own or lack written permission to test may be **illegal**.
