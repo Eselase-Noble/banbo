@@ -21,6 +21,7 @@ jobs:
     steps:
       - name: Check NPM_TOKEN is configured
         id: guard
+        working-directory: . # runs before checkout; the clients/npm dir doesn't exist yet
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
