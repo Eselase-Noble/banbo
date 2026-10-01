@@ -76,6 +76,9 @@ banbo scan 192.0.2.10 --ports 22,80,443 --timeout 5s -y
 # Review the current project for security issues
 banbo code .
 
+# AUDIT THE ENTIRE codebase with AI (every eligible file)
+banbo code . --full
+
 # Review a specific directory, save JSON
 banbo code ./src -o json > code-report.json
 
@@ -84,8 +87,17 @@ banbo code . --no-ai
 ```
 
 `banbo code` walks the directory (skipping `node_modules`, `.git`, `vendor`, `dist`,
-etc.), runs built-in pattern rules offline, and — when a Claude API key is configured —
-adds a deeper AI security/quality review. It is read-only; it never modifies your code.
+etc.), runs built-in pattern rules offline on **every** file, and — when a Claude API key
+is configured — adds a deeper AI security/quality audit. It is read-only; it never
+modifies your code.
+
+**Whole-codebase audit & prioritization.** The AI audit is **risk-prioritized**: banbo
+detects the project's languages/frameworks (e.g. Next.js, Prisma, Go) and audits the most
+security-sensitive files first — auth, payments, API routes, database, config,
+middleware, and anything the pattern rules already flagged. By default it audits the
+highest-risk `--ai-max-files` (15) and **tells you exactly how many files were not
+covered**; pass `--full` to audit the entire codebase. Coverage is never silently
+truncated.
 
 ### Commands
 

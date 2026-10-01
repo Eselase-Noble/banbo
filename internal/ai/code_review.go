@@ -30,22 +30,30 @@ var reviewExts = map[string]bool{
 	".c": true, ".cpp": true, ".h": true, ".rs": true, ".sh": true, ".sql": true,
 }
 
-// ReviewCode asks Claude to review up to maxFiles source files for security and
-// quality issues, returning normalized findings. It is a no-op (0 findings) when
-// AI is not configured. Errors on individual files are skipped, not fatal.
-func ReviewCode(ctx context.Context, cfg config.Config, files []CodeFile, maxFiles int) (int, []findings.Finding, error) {
+// Reviewable reports whether a file path is an AI-auditable source file.
+func Reviewable(path string) bool {
+	return reviewExts[strings.ToLower(filepath.Ext(path))]
+}
+
+// ReviewCode asks Claude to audit source files for security and quality issues,
+// returning normalized findings. Pass files in priority order; maxFiles caps how
+// many are sent (maxFiles <= 0 means audit every eligible file). projectContext
+// is a short tech-stack summary included in each prompt for context-aware
+// analysis. It is a no-op when AI is not configured; per-file errors are skipped.
+func ReviewCode(ctx context.Context, cfg config.Config, files []CodeFile, maxFiles int, projectContext string) (int, []findings.Finding, error) {
 	if !cfg.AIEnabled() {
 		return 0, nil, nil
 	}
 
-	// Select reviewable files up to the cap.
+	// Select reviewable files, preserving caller order; cap only when maxFiles > 0.
 	var selected []CodeFile
 	for _, f := range files {
-		if reviewExts[strings.ToLower(filepath.Ext(f.Path))] {
-			selected = append(selected, f)
-			if len(selected) >= maxFiles {
-				break
-			}
+		if !reviewExts[strings.ToLower(filepath.Ext(f.Path))] {
+			continue
+		}
+		selected = append(selected, f)
+		if maxFiles > 0 && len(selected) >= maxFiles {
+			break
 		}
 	}
 	if len(selected) == 0 {
@@ -69,7 +77,7 @@ func ReviewCode(ctx context.Context, cfg config.Config, files []CodeFile, maxFil
 			case <-ctx.Done():
 				return
 			}
-			fs := reviewOne(ctx, cfg, f)
+			fs := reviewOne(ctx, cfg, f, projectContext)
 			if len(fs) > 0 {
 				mu.Lock()
 				out = append(out, fs...)
@@ -83,21 +91,26 @@ func ReviewCode(ctx context.Context, cfg config.Config, files []CodeFile, maxFil
 }
 
 // reviewOne reviews a single file and parses the model's JSON response.
-func reviewOne(ctx context.Context, cfg config.Config, f CodeFile) []findings.Finding {
+func reviewOne(ctx context.Context, cfg config.Config, f CodeFile, projectContext string) []findings.Finding {
 	content := f.Content
 	if len(content) > maxFileChars {
 		content = content[:maxFileChars] + "\n/* …truncated for review… */"
 	}
 
-	prompt := fmt.Sprintf(`You are a senior application security engineer reviewing one source file for a Ghanaian organization. Identify REAL security vulnerabilities and serious code-quality issues (injection, auth/authorization flaws, secrets, unsafe deserialization, SSRF, path traversal, missing input validation, race conditions, etc.). Ignore trivial style nits.
+	ctxLine := ""
+	if projectContext != "" {
+		ctxLine = "Project context: " + projectContext + "\n\n"
+	}
 
-Return ONLY a JSON array (no prose, no markdown fences). Each element:
+	prompt := fmt.Sprintf(`You are a senior application security engineer auditing a codebase for a Ghanaian organization. Review the source file below for REAL security vulnerabilities and serious code-quality issues (injection, auth/authorization flaws, secrets, unsafe deserialization, SSRF, path traversal, missing input validation, insecure direct object references, race conditions, etc.). Use the project context to judge what matters. Ignore trivial style nits.
+
+%sReturn ONLY a JSON array (no prose, no markdown fences). Each element:
 {"line": <int>, "severity": "critical|high|medium|low|info", "title": "<short>", "explanation": "<1-2 sentences>", "remediation": "<concrete fix>"}
 If there is nothing material, return [].
 
 File: %s
 Content:
-%s`, f.Path, content)
+%s`, ctxLine, f.Path, content)
 
 	text, err := callClaude(ctx, cfg, prompt)
 	if err != nil {

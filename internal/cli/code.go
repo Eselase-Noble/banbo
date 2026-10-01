@@ -24,6 +24,7 @@ type codeFlags struct {
 	noColor    bool
 	noAI       bool
 	aiMaxFiles int
+	full       bool
 }
 
 func newCodeCommand() *cobra.Command {
@@ -52,7 +53,8 @@ Defaults to the current directory.`,
 	cmd.Flags().StringVarP(&f.output, "output", "o", "text", "output format: text or json")
 	cmd.Flags().BoolVar(&f.noColor, "no-color", false, "disable colored output")
 	cmd.Flags().BoolVar(&f.noAI, "no-ai", false, "skip Claude AI review even if an API key is configured")
-	cmd.Flags().IntVar(&f.aiMaxFiles, "ai-max-files", 15, "max files to send for AI review")
+	cmd.Flags().IntVar(&f.aiMaxFiles, "ai-max-files", 15, "max files to AI-audit (highest-risk first); ignored with --full")
+	cmd.Flags().BoolVar(&f.full, "full", false, "AI-audit the ENTIRE codebase, not just the highest-risk files")
 	return cmd
 }
 
@@ -78,21 +80,39 @@ func runCode(path string, f *codeFlags) error {
 	all := res.Findings
 	fmt.Fprintf(os.Stderr, "Scanned %d file(s); %d pattern finding(s).\n", res.FilesScanned, len(all))
 
-	// Optional AI review.
+	// Optional AI audit.
 	if !f.noAI {
 		cfg, _ := config.Load()
 		if cfg.AIEnabled() {
 			files, _ := codescan.Collect(path)
-			cfiles := make([]ai.CodeFile, 0, len(files))
-			for _, s := range files {
+
+			// Build project context and audit the riskiest files first.
+			project := codescan.DetectProject(path, files)
+			flagged := flaggedFiles(all)
+			ordered := codescan.RiskOrder(files, flagged)
+
+			cfiles := make([]ai.CodeFile, 0, len(ordered))
+			for _, s := range ordered {
 				cfiles = append(cfiles, ai.CodeFile{Path: s.Path, Content: s.Content})
 			}
-			fmt.Fprintln(os.Stderr, "Running Claude code review …")
-			reviewed, aiFindings, aerr := ai.ReviewCode(ctx, cfg, cfiles, f.aiMaxFiles)
+
+			maxFiles := f.aiMaxFiles
+			if f.full {
+				maxFiles = 0 // audit everything
+			}
+			if summary := project.Summary(); summary != "" {
+				fmt.Fprintf(os.Stderr, "Detected: %s\n", summary)
+			}
+			fmt.Fprintln(os.Stderr, "Running Claude code audit …")
+			reviewed, aiFindings, aerr := ai.ReviewCode(ctx, cfg, cfiles, maxFiles, project.Summary())
 			if aerr != nil {
-				fmt.Fprintf(os.Stderr, "AI review skipped: %v\n", aerr)
+				fmt.Fprintf(os.Stderr, "AI audit skipped: %v\n", aerr)
 			} else {
-				fmt.Fprintf(os.Stderr, "AI reviewed %d file(s); %d finding(s).\n", reviewed, len(aiFindings))
+				eligible := countEligible(ordered)
+				fmt.Fprintf(os.Stderr, "AI-audited %d of %d eligible source file(s); %d finding(s).\n", reviewed, eligible, len(aiFindings))
+				if !f.full && reviewed < eligible {
+					fmt.Fprintf(os.Stderr, "Note: %d file(s) not AI-audited. Re-run with --full to audit the entire codebase.\n", eligible-reviewed)
+				}
 				all = append(all, aiFindings...)
 			}
 		} else {
@@ -130,4 +150,32 @@ func runCode(path string, f *codeFlags) error {
 		os.Exit(1)
 	}
 	return nil
+}
+
+// flaggedFiles returns the set of file paths that already have pattern findings
+// (the leading "path:line" of each code-layer finding's asset).
+func flaggedFiles(fs []findings.Finding) map[string]bool {
+	out := map[string]bool{}
+	for _, f := range fs {
+		if f.Layer != findings.LayerCode {
+			continue
+		}
+		path := f.Asset
+		if i := strings.LastIndex(path, ":"); i > 0 {
+			path = path[:i]
+		}
+		out[path] = true
+	}
+	return out
+}
+
+// countEligible counts files that are eligible for AI audit.
+func countEligible(files []codescan.SourceFile) int {
+	n := 0
+	for _, f := range files {
+		if ai.Reviewable(f.Path) {
+			n++
+		}
+	}
+	return n
 }
