@@ -1,0 +1,175 @@
+# banbo
+
+**banbo** (Twi: *to protect / defend*) is a layered security scanner. Point it at a
+system you own or are authorized to test, and it probes across the stack — DNS/email,
+network, transport (TLS) and application (HTTP) — then reports the vulnerabilities it
+finds with severity ratings, maps them to Ghana's **Bank of Ghana Cyber & Information
+Security Directive** and the **Data Protection Act, 2012 (Act 843)**, and can use
+**Claude** to explain each issue and exactly how to fix it in plain English.
+
+> Scan. Understand. Fortify.
+
+It ships as a **single, self-contained binary** — no runtime, no dependencies to install.
+
+---
+
+## ⚠️ Legal & responsible use
+
+Scanning systems you do not own or lack written permission to test may be **illegal**.
+`banbo` is built for **authorized** security testing only:
+
+- Every scan requires you to confirm authorization (`--i-am-authorized`, or an
+  interactive prompt).
+- Checks are **passive and non-destructive** by default — `banbo` detects issues, it does
+  not exploit them, and it never launches denial-of-service or destructive payloads.
+
+You are responsible for how you use this tool.
+
+---
+
+## Installation
+
+### From source (Go 1.22+)
+
+```bash
+go install github.com/Eselase-Noble/banbo/cmd/banbo@latest
+```
+
+### Clone and build
+
+```bash
+git clone https://github.com/Eselase-Noble/banbo.git
+cd banbo
+go build -o banbo ./cmd/banbo
+./banbo version
+```
+
+Prebuilt binaries for macOS, Linux and Windows will be published on the
+[Releases](https://github.com/Eselase-Noble/banbo/releases) page.
+
+---
+
+## Usage
+
+```bash
+# Scan a domain (you'll be asked to confirm authorization)
+banbo scan example.com.gh
+
+# Skip the prompt when you know you're authorized
+banbo scan example.com.gh --i-am-authorized
+
+# Machine-readable output for pipelines / dashboards
+banbo scan https://app.example.com -o json > report.json
+
+# Scan specific ports with a custom timeout
+banbo scan 192.0.2.10 --ports 22,80,443 --timeout 5s -y
+```
+
+### Commands
+
+| Command          | Description                                              |
+|------------------|----------------------------------------------------------|
+| `banbo scan <target>` | Scan a host, IP or URL across all layers            |
+| `banbo config`   | Show configuration and how to enable AI enrichment       |
+| `banbo version`  | Print the version                                        |
+
+### Key flags for `scan`
+
+| Flag                   | Description                                             |
+|------------------------|--------------------------------------------------------|
+| `-o, --output`         | `text` (default) or `json`                             |
+| `--ports`              | Comma-separated ports (default: a common-ports set)    |
+| `--timeout`            | Per-connection timeout (default `5s`)                  |
+| `-y, --i-am-authorized`| Confirm you are authorized to scan the target          |
+| `--active`             | Enable deeper (still non-destructive) checks           |
+| `--no-ai`              | Skip Claude enrichment even if a key is configured     |
+| `--no-color`           | Disable colored output                                 |
+
+**Exit codes** (CI/CD friendly): `0` clean/info only · `1` low/medium findings ·
+`2` high/critical findings.
+
+---
+
+## AI-powered explanations (optional)
+
+Without any setup, `banbo` reports findings using built-in remediation guidance.
+Add a Claude API key to also get plain-English explanations, business-impact summaries
+and step-by-step fixes:
+
+```bash
+export BANBO_API_KEY=sk-ant-...      # or ANTHROPIC_API_KEY
+```
+
+or create `~/.banbo/config.json`:
+
+```json
+{ "api_key": "sk-ant-...", "model": "claude-opus-4-8" }
+```
+
+Run `banbo config` to check your setup.
+
+---
+
+## How it works
+
+`banbo` runs each layer's checks concurrently, normalizes every result into a common
+finding, then enriches and reports:
+
+1. **DNS / email** — SPF & DMARC records (spoofing / phishing exposure).
+2. **Network** — open TCP ports and the services behind them (risky/legacy services
+   flagged higher).
+3. **Transport (TLS)** — certificate validity/expiry and acceptance of legacy
+   TLS 1.0/1.1.
+4. **Application (HTTP)** — missing security headers, version disclosure, permissive
+   CORS, insecure cookies.
+5. **Normalize → enrich → report** — de-duplicate, score, map to compliance, optionally
+   explain with Claude, and print to the terminal or as JSON.
+
+### Architecture
+
+```
+cmd/banbo            CLI entry point
+internal/
+  cli/               command wiring (scan, config, version)
+  scanner/           target parsing + concurrent orchestrator + Module interface
+  modules/           pluggable checks: network, tls, http, dns
+  findings/          normalized Finding model, severity, de-dup & summary
+  ai/                Claude API enrichment (optional; static fallback)
+  compliance/        BoG Directive & Data Protection Act mapping
+  report/            terminal + JSON renderers
+  config/            config file + environment loading
+```
+
+Adding a new check means implementing one interface:
+
+```go
+type Module interface {
+    Name() string
+    Scan(ctx context.Context, t scanner.Target) ([]findings.Finding, error)
+}
+```
+
+---
+
+## Roadmap
+
+- Embed ProjectDiscovery engines (`naabu`, `httpx`, `dnsx`, `tlsx`, `nuclei`) for deeper,
+  template-based vulnerability detection.
+- Subdomain enumeration and multi-host / CIDR scanning.
+- HTML and PDF reports.
+- Homebrew tap and `curl | sh` installer.
+- Optional web dashboard.
+
+---
+
+## Development
+
+```bash
+go build ./...     # build
+go test ./...      # run tests
+go vet ./...       # static checks
+```
+
+## License
+
+[MIT](./LICENSE)

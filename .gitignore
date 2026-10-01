@@ -1,0 +1,15 @@
+# Binaries
+/banbo
+/dist/
+*.exe
+*.out
+
+# Local config / secrets
+.env
+config.json
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
